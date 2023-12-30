@@ -3,6 +3,16 @@
   font-size: 16px;
   color: black;
 }
-.tansparent {
+.buttons {
+  margin-top: 4rem;
+}
+/* .tansparent {
   background-color: transparent;
+} */
+@media only screen and (max-width: 600px) {
+  .buttons {
+    width: 100%;
+    margin-top: 6px;
+    margin-bottom: 6px;
+  }
 }
