@@ -66,7 +66,7 @@ const Login = () => {
           });
 
           // sending the token to local Storage for further processing
-          localStorage.setItem("toekn", res.data.User.token);
+          localStorage.setItem("token", res.data.User.token);
           // navigating to the home page once everything is done like validation
           navigate("/started");
         }

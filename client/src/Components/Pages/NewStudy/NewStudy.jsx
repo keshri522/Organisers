@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "../NewStudy/NewStudy.module.css";
 import { useNavigate } from "react-router-dom";
-
+import { toast } from "react-toastify";
+import axios from "axios";
 const NewStudy = () => {
+  const navigate = useNavigate();
   // thease are the states to manage the local of the components
   const [selectedCustomVisitRow, setSelectedCustomVisitRow] = useState(null); // storing the index
   const [study, setStudy] = useState(""); // storing the study of the template
@@ -13,9 +15,19 @@ const NewStudy = () => {
     { visit: "", day: "", plus: "", minus: "" },
   ]); // state for the rowsvand all the data of the components
   // this functio will change the study
+  const [token, Settoken] = useState("");
   const StudyChange = (e) => {
     setStudy(e.target.value);
   };
+  // when ever page reload this useffect will run
+  useEffect(() => {
+    // getting the token from the local Storage
+    const tokens = localStorage.getItem("token");
+    if (tokens) {
+      Settoken(tokens);
+    }
+  }, []);
+
   // this will mange the Visit changes if anty changes happens this functio will ead and run
   const handleVisitChange = (e, index) => {
     const { name, value } = e.target;
@@ -66,19 +78,46 @@ const NewStudy = () => {
     setRows([...rows, { visit: "", day: "", plus: "", minus: "" }]);
     setCustomVisitValues((prevValues) => [...prevValues, ""]);
   };
-  // this functio will save all the data in the backend
-  const saveVisits = (e) => {
+  // this functio will save all the data in the backend this is async function
+
+  const saveVisits = async (e) => {
     e.preventDefault();
-    console.log(rows, study);
-    setLoading(true);
-    // making some delay in the applicatio of submit button to show some effect like loadin of spinners
-    setTimeout(() => {
+    try {
+      // add all the logic  here in the try block like makig api calls and reset all the things.
+      setLoading(true);
+
+      // making an api call to the endpoints
+      let res = await axios.post(
+        `${process.env.REACT_APP_API_URL}/allstudydata`,
+        // this is body sending to Server side
+        {
+          studyName: study,
+          studyData: rows,
+        },
+        // this is the token jwt toekn sending in the response as headers
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.status === 200) {
+        // making some delay in the applicatio of submit button to show some effect like loadin of spinners
+        setTimeout(() => {
+          setLoading(false);
+          setRows([{ day: "", plus: "", minus: "", visit: "" }]);
+          setStudy("");
+          setIsCustomVisit(false);
+          setCustomVisitValues(Array(rows.length).fill(""));
+          toast.success("Study Added Successfully");
+          navigate("/started");
+        }, 2000);
+      }
+    } catch (error) {
+      // console.log(error);
       setLoading(false);
-      setRows([{ day: "", plus: "", minus: "", visit: "" }]);
-      setStudy("");
-      setIsCustomVisit(false);
-      setCustomVisitValues(Array(rows.length).fill(""));
-    }, 2000);
+    }
   };
 
   return (
