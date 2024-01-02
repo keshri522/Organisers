@@ -1,83 +1,84 @@
 import React, { useState } from "react";
 import styles from "../NewStudy/NewStudy.module.css";
 import { useNavigate } from "react-router-dom";
-import type { DatePickerProps } from "antd";
-import { DatePicker } from "antd";
 
 const NewStudy = () => {
-  // Add a state variable to keep track of the selected row for custom visit
-  const [selectedCustomVisitRow, setSelectedCustomVisitRow] = useState(null);
-
-  const navigate = useNavigate();
-  const [study, Setstudy] = useState("");
-  const [loading, Setloading] = useState(false);
-  const [isCustomVisit, setIsCustomVisit] = useState(false); // THIS IS FOR CUSTOM VISIT LIKE ONCE USER CLICKED ON THE CUSTOM VISIT I INPUT BOX WILL OPEN
-  const [customVisitValue, setcustomVisitValue] = useState("");
+  // thease are the states to manage the local of the components
+  const [selectedCustomVisitRow, setSelectedCustomVisitRow] = useState(null); // storing the index
+  const [study, setStudy] = useState(""); // storing the study of the template
+  const [loading, setLoading] = useState(false); // shjowing some effect based on the loading
+  const [isCustomVisit, setIsCustomVisit] = useState(false); // count the current index of the applicatiuons
+  const [customVisitValues, setCustomVisitValues] = useState(Array(1).fill("")); // handling the dropdown for the all the rows means based on the seelcted
   const [rows, setRows] = useState([
     { visit: "", day: "", plus: "", minus: "" },
-  ]);
-
-  // const onChange: DatePickerProps["onChange"] = (date, dateString, index) => {
-  //   const newRows = [...rows];
-  //   newRows[index].date = dateString;
-  //   setRows(newRows);
-  // };
+  ]); // state for the rowsvand all the data of the components
+  // this functio will change the study
   const StudyChange = (e) => {
-    Setstudy(e.target.value);
+    setStudy(e.target.value);
   };
-  // this functio will handle the change based on the rows data onchange
+  // this will mange the Visit changes if anty changes happens this functio will ead and run
   const handleVisitChange = (e, index) => {
     const { name, value } = e.target;
 
-    // first check if the index is there then worksd
-    setIsCustomVisit(value === "Custom Visit");
-    setSelectedCustomVisitRow(index);
-    const newRows = [...rows];
-    newRows[index][name] = value;
-    setRows(newRows);
-  };
-  const handleDeleteRow = (index) => {
-    const FilteredRows = rows.filter((row, i) => i !== index);
-    setRows(FilteredRows);
-  };
-  // this will add new dynamic rows based on the clicked
-  const AddMoreRows = () => {
-    setRows([...rows, { visit: "", day: "", plus: "", minus: "" }]);
-  };
-  // thsi function will will save all the visits
-  const Savevisits = (e) => {
-    // console.log(rows, study);
-    Setloading(true);
-    e.preventDefault();
-
-    setTimeout(() => {
-      Setloading(false);
-      setRows([
-        {
-          day: "",
-          plus: "",
-          minus: "",
-          visit: "",
-        },
-      ]);
-      Setstudy("");
+    if (value === "Custom Visit") {
+      setCustomVisitValues((prevValues) => {
+        const newValues = [...prevValues];
+        newValues[index] = ""; // Clear custom visit value for other rows
+        return newValues;
+      });
+      setIsCustomVisit(true);
+    } else {
       setIsCustomVisit(false);
-    }, 2000);
-    // Reset rows to have a single object with empty values
-
-    // Reset study to an empty string
-  };
-  // thsi function will handle all the chanes in the custom visit make it to the state
-
-  const handlechanges = (e, index) => {
-    const { name, value } = e.target;
+    }
+    // assigning the index of that rows later on will be using this
+    setSelectedCustomVisitRow(index);
+    // handing mutation in that state
     const newRows = [...rows];
+    newRows[index][name] = value;
+    setRows(newRows);
+  };
+  // this functio will delete all the rows based on the index values i have used
+  const handleDeleteRow = (index) => {
+    const filteredRows = rows.filter((row, i) => i !== index);
+    setRows(filteredRows);
+    setCustomVisitValues((prevValues) => {
+      const newValues = [...prevValues];
+      newValues.splice(index, 1);
+      return newValues;
+    });
+  };
+  // this functio wi9ll changs all the rows value
+  const handleChanges = (e, index) => {
+    const { name, value } = e.target;
 
+    const newRows = [...rows];
     newRows[index][name] = value;
     setRows(newRows);
 
-    // If you want to set the value to some other state variable, you can do that too
-    setcustomVisitValue(value);
+    setCustomVisitValues((prevValues) => {
+      const newValues = [...prevValues];
+      newValues[index] = value;
+      return newValues;
+    });
+  };
+  // this function will add the extra rows and all the rows
+  const addMoreRows = () => {
+    setRows([...rows, { visit: "", day: "", plus: "", minus: "" }]);
+    setCustomVisitValues((prevValues) => [...prevValues, ""]);
+  };
+  // this functio will save all the data in the backend
+  const saveVisits = (e) => {
+    e.preventDefault();
+    console.log(rows, study);
+    setLoading(true);
+    // making some delay in the applicatio of submit button to show some effect like loadin of spinners
+    setTimeout(() => {
+      setLoading(false);
+      setRows([{ day: "", plus: "", minus: "", visit: "" }]);
+      setStudy("");
+      setIsCustomVisit(false);
+      setCustomVisitValues(Array(rows.length).fill(""));
+    }, 2000);
   };
 
   return (
@@ -111,11 +112,10 @@ const NewStudy = () => {
             </div>
           </div>
         </div>
-        {/* // adding some  conditional rendering */}
         {rows.length === 0 ? (
           <div className="text-center mt-5">
             <h5 className="text-primary">
-              No rows selected please add rows to Continue
+              No rows selected. Please add rows to continue.
             </h5>
           </div>
         ) : (
@@ -129,27 +129,26 @@ const NewStudy = () => {
                   <div className="col-md-3">
                     <label className="mb-2 mt-2 text-dark">Visits</label>
                     <select
-                      className={`form-control p-2 `}
+                      className={`form-control p-2`}
                       name="visit"
                       value={row.visit}
                       onChange={(e) => handleVisitChange(e, index)}
                     >
-                      <option value="">Select Visit</option>
+                      <option value="h">Select Visit</option>
                       <option value="Visit 1">Visit 1</option>
                       <option value="Visit 2">Visit 2</option>
-                      <option value="Visit 3">Visit 1</option>
-                      <option value="Visit 4">Visit 2</option>
-                      <option value="Visit 5">Visit 2</option>
+                      <option value="Visit 3">Visit 3</option>
+                      <option value="Visit 4">Visit 4</option>
+                      <option value="Visit 5">Visit 5</option>
                       <option value="Custom Visit">Custom Visit</option>
-                      <option value={customVisitValue}>
-                        {customVisitValue}
+                      <option value={customVisitValues[index]}>
+                        {customVisitValues[index]}
                       </option>
                     </select>
                   </div>
 
                   <div className="col-md-2">
                     <label className="mb-2 mt-2 text-dark">Day</label>
-
                     <input
                       onChange={(e) => handleVisitChange(e, index)}
                       type="number"
@@ -160,7 +159,6 @@ const NewStudy = () => {
                   </div>
                   <div className="col-md-2">
                     <label className="mb-2 mt-2 text-dark">Minus</label>
-
                     <input
                       onChange={(e) => handleVisitChange(e, index)}
                       type="number"
@@ -171,7 +169,6 @@ const NewStudy = () => {
                   </div>
                   <div className="col-md-2">
                     <label className="mb-2 mt-2 text-dark">Plus</label>
-
                     <input
                       onChange={(e) => handleVisitChange(e, index)}
                       name="plus"
@@ -190,7 +187,6 @@ const NewStudy = () => {
                     </label>
                   </div>
                 </div>
-                {/* // for showing the custom visit optios based on the states */}
                 {isCustomVisit && selectedCustomVisitRow === index && (
                   <div className="row mt-4">
                     <div className="col-md-3">
@@ -201,7 +197,7 @@ const NewStudy = () => {
                           type="text"
                           className={`form-control p-2`}
                           placeholder="Enter custom visit"
-                          onChange={(e) => handlechanges(e, index)}
+                          onChange={(e) => handleChanges(e, index)}
                         />
                         <div className="">
                           <label
@@ -210,6 +206,11 @@ const NewStudy = () => {
                             onClick={() => {
                               setSelectedCustomVisitRow(null);
                               setIsCustomVisit(false);
+                              setCustomVisitValues((prevValues) => {
+                                const newValues = [...prevValues];
+                                newValues[index] = ""; // Clear custom visit value for the current row
+                                return newValues;
+                              });
                             }}
                           >
                             <i className="fa-solid fa-trash"></i>
@@ -223,12 +224,12 @@ const NewStudy = () => {
             ))}
           </>
         )}
-
+        {/* this will add new rows on click of the button  */}
         <div className="row d-flex justify-content-between">
           <div className="col-md-3 ">
             <button
               className={`btn btn-primary ${styles.buttons}`}
-              onClick={AddMoreRows}
+              onClick={addMoreRows}
             >
               <span>
                 <i className="fa-solid fa-plus"></i>
@@ -248,7 +249,7 @@ const NewStudy = () => {
                     row.minus.length === 0
                 )
               }
-              onClick={Savevisits}
+              onClick={saveVisits}
               className={`btn btn-primary ${styles.buttons}`}
             >
               {loading ? "...Saving" : "Save Visit"}
